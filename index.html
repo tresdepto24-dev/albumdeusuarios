@@ -6,7 +6,7 @@
     <title>Álbum de Estampillas — EstampiYA!</title>
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Special+Elite&family=VT323&display=swap" rel="stylesheet">
     
-    <!-- SDKs de Firebase en la Nube -->
+    <!-- SDKs de Firebase en la Nube (Versión Compat para HTML plano) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
@@ -284,17 +284,18 @@
     <canvas id="canvas-oculto"></canvas>
 
     <script>
-        // --- CONFIGURACIÓN DE FIREBASE (Reemplazá esto con tus credenciales gratuitas de tu proyecto Firebase) ---
+        // --- CONFIGURACIÓN DE FIREBASE (Tus credenciales reales integradas) ---
         const firebaseConfig = {
-            apiKey: "TU_API_KEY_AQUI",
-            authDomain: "tu-proyecto.firebaseapp.com",
-            projectId: "tu-proyecto",
-            storageBucket: "tu-proyecto.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123:web:abc"
+            apiKey: "AIzaSyDWUrZHeJqvsRBPGT0NUb_7yRuHcdwq04I",
+            authDomain: "albumestampiya.firebaseapp.com",
+            projectId: "albumestampiya",
+            storageBucket: "albumestampiya.firebasestorage.app",
+            messagingSenderId: "16621622478",
+            appId: "1:16621622478:web:1b412cabffcc9764972c9f",
+            measurementId: "G-GKSX7G4918"
         };
 
-        // Inicializar Firebase
+        // Inicializar Firebase (Versión Compat)
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -396,7 +397,6 @@
             box.innerText = '[ Sin Imagen Seleccionada ]';
         }
 
-        // --- GUARDAR DIRECTAMENTE EN LA NUBE DE FIRESTORE ---
         async function guardarEstampillaNube() {
             const texto = document.getElementById('input-texto').value.trim();
 
@@ -426,16 +426,14 @@
             try {
                 await db.collection("estampillas_globales").add(nuevoItem);
                 resetearFormulario();
-                cargarAlbumDesdeNube();
             } catch (error) {
-                alert("Error al guardar en la nube. Verificá tu configuración de Firebase.");
+                alert("Error al guardar en la nube. Verificá que Firestore esté activado en tu panel de Firebase.");
             } finally {
                 btn.innerText = "☁️ Sellar y Guardar en la Nube";
                 btn.disabled = false;
             }
         }
 
-        // --- CARGAR ÁLBUM DESDE LA NUBE EN TIEMPO REAL ---
         function cargarAlbumDesdeNube() {
             const contenedor = document.getElementById('grilla-estampillas');
             if (!contenedor) return;
@@ -449,7 +447,7 @@
                   });
                   renderizarAlbum();
               }, (error) => {
-                  contenedor.innerHTML = '<p style="color:red; text-align:center; grid-column:span 2;">Configurá tus credenciales de Firebase en el código para ver el álbum sincronizado.</p>';
+                  contenedor.innerHTML = '<p style="color:red; text-align:center; grid-column:span 2;">Asegurate de activar Firestore Database en modo de prueba desde tu panel de Firebase.</p>';
               });
         }
 
@@ -499,7 +497,6 @@
             }
         }
 
-        // --- MOTOR DE DESCARGA DE LA ESTAMPILLA INTEGRADA (Sello redondo + Display Casio + Texto) ---
         function descargarEstampillaHD(id) {
             const item = baseEstampillas.find(c => String(c.id) === String(id));
             if (!item) return;
@@ -540,7 +537,6 @@
                 ctx.lineWidth = 2;
                 ctx.strokeRect(stampX + 12, stampY + 12, stampW - 24, stampH - 24);
 
-                // Perforaciones dentadas
                 ctx.fillStyle = '#f7f3e8';
                 const radioOndita = 9;
                 for (let x = stampX + 26; x < stampX + stampW - 12; x += 22) {
@@ -567,7 +563,6 @@
                 ctx.fillRect(areaImgX, areaImgY, areaImgW, areaImgH);
                 ctx.drawImage(img, 0, 0, img.width, img.height, areaImgX + shiftX, areaImgY + shiftY, img.width * ratio, img.height * ratio);
 
-                // Display Casio Cyan Brillante
                 let panelDigitalW = areaImgW - 40;
                 let panelDigitalH = 75;
                 let panelDigitalX = areaImgX + 20;
@@ -590,7 +585,6 @@
                 ctx.font = '15px "VT323", monospace';
                 ctx.fillText(`HASH S:${item.hash} | B:${hashBajada}`, textX, panelDigitalY + 70);
 
-                // Sello Redondo Antiguo
                 ctx.save();
                 let selloX = areaImgX + 85;
                 let selloY = areaImgY + 85;
@@ -612,7 +606,6 @@
                 ctx.fillText("MAR DEL PLATA", 0, 22);
                 ctx.restore();
 
-                // Zona de escritura de texto extendido
                 let zonaEscrituraY = areaImgY + areaImgH + 15;
                 let zonaEscrituraH = stampY + stampH - zonaEscrituraY - 35;
                 let zonaEscrituraW = areaImgW;
