@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Álbum de Estampillas — EstampiYA!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Special+Elite&family=VT323&display=swap" rel="stylesheet">
+    
+    <!-- SDKs de Firebase en la Nube -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        body {
+            font-family: 'Courier Prime', monospace;
+            background-color: #1a211e;
+            color: #2b2b2b;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .contenedor-principal {
+            width: 100%;
+            max-width: 950px;
+            background: #f7f3e8;
+            border: 4px solid #344e41;
+            padding: 25px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-image: radial-gradient(#eae3d2 15%, transparent 16%), radial-gradient(#eae3d2 15%, transparent 16%);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+        .header-app {
+            text-align: center;
+            border-bottom: 2px dashed #344e41;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .header-app h1 {
+            font-family: 'Special Elite', cursive;
+            font-size: 1.8rem;
+            margin: 0;
+            color: #2e463c;
+            letter-spacing: 2px;
+        }
+        .slogan-box {
+            font-size: 0.75rem;
+            color: #588157;
+            font-style: italic;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+        .ticker-tiempo {
+            background: #2e463c;
+            color: #f7f3e8;
+            padding: 6px 12px;
+            border-radius: 2px;
+            font-size: 0.7rem;
+            display: inline-block;
+            margin-top: 8px;
+            letter-spacing: 1px;
+            border: 1px solid #588157;
+        }
+        .panel-formulario {
+            background: #f0f4f1;
+            border: 2px dashed #588157;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+        }
+        .panel-titulo {
+            font-family: 'Special Elite', cursive;
+            font-size: 1.05rem;
+            margin-bottom: 12px;
+            color: #2e463c;
+            text-align: center;
+        }
+        .form-grupo {
+            margin-bottom: 12px;
+        }
+        .form-grupo label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+            color: #2b2b2b;
+        }
+        input[type="text"], textarea, input[type="file"] {
+            width: 100%;
+            font-size: 0.8rem;
+            padding: 8px;
+            box-sizing: border-box;
+            background: #fff;
+            border: 1px solid #344e41;
+            font-family: 'Courier Prime', monospace;
+            border-radius: 2px;
+        }
+        textarea {
+            resize: vertical;
+            height: 70px;
+        }
+        .preview-box {
+            width: 100%;
+            height: 200px;
+            background-color: #fff;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border: 2px dashed #a3b18a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: #588157;
+            margin-bottom: 6px;
+            border-radius: 2px;
+        }
+        .grupo-botones {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .btn-principal {
+            background: #3a5a40;
+            color: #fbf9f1;
+            border: none;
+            font-family: 'Special Elite', cursive;
+            font-size: 0.85rem;
+            padding: 10px;
+            cursor: pointer;
+            width: 100%;
+            border-radius: 2px;
+            transition: background 0.2s;
+        }
+        .btn-principal:hover { background: #588157; }
+        .btn-cancelar {
+            background: #bc4749;
+            width: 35%;
+        }
+        .btn-cancelar:hover { background: #a73234; }
+
+        .seccion-directorio h2 {
+            font-family: 'Special Elite', cursive;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #344e41;
+            padding-bottom: 6px;
+            color: #2e463c;
+            margin-top: 20px;
+        }
+        .grilla-estampillas {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-top: 15px;
+        }
+        @media (max-width: 700px) {
+            .grilla-estampillas {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .tarjeta-estampilla {
+            background: #fff;
+            border: 1px solid #dcd6c5;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            box-shadow: 4px 4px 12px rgba(0,0,0,0.12);
+            position: relative;
+        }
+        
+        .marco-dentado {
+            background: #fff;
+            padding: 8px;
+            position: relative;
+            margin-bottom: 10px;
+            border: 2px dashed #b7b7b7;
+        }
+
+        .tarjeta-img-horizontal {
+            width: 100%;
+            height: 160px;
+            background-color: #f7f7f7;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border: 1px solid #eaeaea;
+        }
+
+        .tarjeta-img-vertical {
+            width: 100%;
+            height: 260px;
+            background-color: #f7f7f7;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border: 1px solid #eaeaea;
+        }
+
+        .tarjeta-info {
+            margin-bottom: 10px;
+            word-break: break-word;
+            text-align: center;
+            line-height: 1.4;
+            background: #fcfbf7;
+            padding: 6px;
+            border: 1px solid #eee;
+        }
+        .acciones-tarjeta {
+            display: flex;
+            gap: 5px;
+        }
+        .btn-tarjeta {
+            background: #3a5a40;
+            color: #fbf9f1;
+            border: none;
+            font-family: 'Special Elite', cursive;
+            font-size: 0.68rem;
+            padding: 6px 4px;
+            cursor: pointer;
+            flex: 1;
+            border-radius: 2px;
+            text-align: center;
+        }
+        .btn-tarjeta:hover { background: #588157; }
+        .btn-tarjeta-eliminar { background: #bc4749; }
+        .btn-tarjeta-eliminar:hover { background: #a73234; }
+
+        .footer-app {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.7rem;
+            border-top: 2px dashed #344e41;
+            padding-top: 12px;
+            color: #588157;
+        }
+        #canvas-oculto { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor-principal">
+        <div class="header-app">
+            <h1>ESTAMPIYA! — ÁLBUM EN LA NUBE</h1>
+            <div class="slogan-box">"Sellando el Milisegundo" — Sincronización Multidispositivo</div>
+            <div class="ticker-tiempo" id="ticker-reloj">Línea de Tiempo : Cargando...</div>
+        </div>
+
+        <div class="panel-formulario">
+            <div class="panel-titulo" id="titulo-panel">✨ NUEVA ESTAMPILLA / SELLAR MILISEGUNDO</div>
+            
+            <div class="form-grupo">
+                <label>1. Tu Imagen (Se sincronizará automáticamente en la nube):</label>
+                <div class="preview-box" id="preview-contenedor">[ Sin Imagen Seleccionada ]</div>
+                <input type="file" accept="image/*" id="input-archivo" onchange="procesarImagen(event)">
+            </div>
+
+            <div class="form-grupo">
+                <label>2. Cuéntanos tu historia (Texto extendido para la estampilla):</label>
+                <textarea id="input-texto" placeholder="Escribí aquí tu anécdota o historia completa..."></textarea>
+            </div>
+
+            <div class="grupo-botones">
+                <button class="btn-principal" id="btn-guardar" onclick="guardarEstampillaNube()">☁️ Sellar y Guardar en la Nube</button>
+                <button class="btn-principal btn-cancelar" onclick="resetearFormulario()">❌ Cancelar</button>
+            </div>
+        </div>
+
+        <div class="seccion-directorio">
+            <h2>PÁGINAS DEL ÁLBUM GLOBAL</h2>
+            <div class="grilla-estampillas" id="grilla-estampillas"></div>
+        </div>
+
+        <div class="footer-app">
+            EstampiYA! &bull; Conectado en tiempo real a base de datos en la nube.
+        </div>
+    </div>
+
+    <canvas id="canvas-oculto"></canvas>
+
+    <script>
+        // --- CONFIGURACIÓN DE FIREBASE (Reemplazá esto con tus credenciales gratuitas de tu proyecto Firebase) ---
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY_AQUI",
+            authDomain: "tu-proyecto.firebaseapp.com",
+            projectId: "tu-proyecto",
+            storageBucket: "tu-proyecto.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123:web:abc"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let imagenTemporal = null;
+        let orientacionTemporal = 'horizontal';
+        let baseEstampillas = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            iniciarRelojMilisegundos();
+            cargarAlbumDesdeNube();
+        });
+
+        function iniciarRelojMilisegundos() {
+            setInterval(() => {
+                const ahora = new Date();
+                const dia = String(ahora.getDate()).padStart(2, '0');
+                const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+                const anio = ahora.getFullYear();
+                const hora = String(ahora.getHours()).padStart(2, '0');
+                const min = String(ahora.getMinutes()).padStart(2, '0');
+                const seg = String(ahora.getSeconds()).padStart(2, '0');
+                const mili = String(ahora.getMilliseconds()).padStart(3, '0');
+
+                const textoReloj = `Línea de Tiempo : ${dia}:${mes}:${anio} : ${hora}:${min}:${seg}:${mili}`;
+                const elem = document.getElementById('ticker-reloj');
+                if (elem) elem.innerText = textoReloj;
+            }, 47);
+        }
+
+        function obtenerTimestampPreciso() {
+            const ahora = new Date();
+            const dia = String(ahora.getDate()).padStart(2, '0');
+            const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+            const anio = ahora.getFullYear();
+            const hora = String(ahora.getHours()).padStart(2, '0');
+            const min = String(ahora.getMinutes()).padStart(2, '0');
+            const seg = String(ahora.getSeconds()).padStart(2, '0');
+            const mili = String(ahora.getMilliseconds()).padStart(3, '0');
+            return `${dia}:${mes}:${anio} : ${hora}:${min}:${seg}:${mili}`;
+        }
+
+        function generarHashUnico() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let hash = 'HASH-';
+            for (let i = 0; i < 6; i++) {
+                hash += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return hash + '-' + Math.floor(Math.random() * 900 + 100);
+        }
+
+        function procesarImagen(event) {
+            const archivo = event.target.files[0];
+            if (!archivo) return;
+
+            const lector = new FileReader();
+            lector.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width;
+                    let h = img.height;
+                    
+                    if (h > w) {
+                        orientacionTemporal = 'vertical';
+                    } else {
+                        orientacionTemporal = 'horizontal';
+                    }
+
+                    const max = 800;
+                    if (w > h) {
+                        if (w > max) { h *= max / w; w = max; }
+                    } else {
+                        if (h > max) { w *= max / h; h = max; }
+                    }
+
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    imagenTemporal = canvas.toDataURL('image/jpeg', 0.85);
+
+                    const box = document.getElementById('preview-contenedor');
+                    box.style.backgroundImage = `url('${imagenTemporal}')`;
+                    box.innerText = '';
+                };
+                img.src = e.target.result;
+            };
+            lector.readAsDataURL(archivo);
+        }
+
+        function resetearFormulario() {
+            imagenTemporal = null;
+            orientacionTemporal = 'horizontal';
+            document.getElementById('input-archivo').value = '';
+            document.getElementById('input-texto').value = '';
+            const box = document.getElementById('preview-contenedor');
+            box.style.backgroundImage = 'none';
+            box.innerText = '[ Sin Imagen Seleccionada ]';
+        }
+
+        // --- GUARDAR DIRECTAMENTE EN LA NUBE DE FIRESTORE ---
+        async function guardarEstampillaNube() {
+            const texto = document.getElementById('input-texto').value.trim();
+
+            if (!texto) {
+                alert("Por favor, escribí algo para contar tu historia en la estampilla.");
+                return;
+            }
+            if (!imagenTemporal) {
+                alert("Por favor, seleccioná una imagen.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-guardar');
+            btn.innerText = "⏳ Sincronizando con la nube...";
+            btn.disabled = true;
+
+            const nuevoItem = {
+                codigo: 'EST-' + Math.random().toString(36).substring(2, 7).toUpperCase(),
+                texto: texto,
+                imagen: imagenTemporal,
+                orientacion: orientacionTemporal,
+                timestampSubida: obtenerTimestampPreciso(),
+                hash: generarHashUnico(),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                await db.collection("estampillas_globales").add(nuevoItem);
+                resetearFormulario();
+                cargarAlbumDesdeNube();
+            } catch (error) {
+                alert("Error al guardar en la nube. Verificá tu configuración de Firebase.");
+            } finally {
+                btn.innerText = "☁️ Sellar y Guardar en la Nube";
+                btn.disabled = false;
+            }
+        }
+
+        // --- CARGAR ÁLBUM DESDE LA NUBE EN TIEMPO REAL ---
+        function cargarAlbumDesdeNube() {
+            const contenedor = document.getElementById('grilla-estampillas');
+            if (!contenedor) return;
+
+            db.collection("estampillas_globales")
+              .orderBy("createdAt", "desc")
+              .onSnapshot((querySnapshot) => {
+                  baseEstampillas = [];
+                  querySnapshot.forEach((doc) => {
+                      baseEstampillas.push({ id: doc.id, ...doc.data() });
+                  });
+                  renderizarAlbum();
+              }, (error) => {
+                  contenedor.innerHTML = '<p style="color:red; text-align:center; grid-column:span 2;">Configurá tus credenciales de Firebase en el código para ver el álbum sincronizado.</p>';
+              });
+        }
+
+        function renderizarAlbum() {
+            const contenedor = document.getElementById('grilla-estampillas');
+            if (!contenedor) return;
+
+            contenedor.innerHTML = '';
+
+            if (baseEstampillas.length === 0) {
+                contenedor.innerHTML = '<p style="font-size:0.75rem; color:#588157; grid-column: span 2; text-align:center;">El álbum está vacío. ¡Sellá tu primera imagen en la nube!</p>';
+                return;
+            }
+
+            baseEstampillas.forEach(item => {
+                const orient = item.orientacion || 'horizontal';
+                const claseImg = orient === 'vertical' ? 'tarjeta-img-vertical' : 'tarjeta-img-horizontal';
+
+                const tarjeta = document.createElement('div');
+                tarjeta.className = 'tarjeta-estampilla';
+                tarjeta.innerHTML = `
+                    <div class="marco-dentado">
+                        <div class="${claseImg}" style="background-image: url('${item.imagen}')"></div>
+                    </div>
+                    <div class="tarjeta-info">
+                        <span style="font-size:0.63rem; color:#7f4f24; font-weight:bold;">Ref: ${item.codigo}</span><br>
+                        <span style="color:#2b2b2b; font-weight:bold; font-size:0.75rem; display:block; margin:4px 0; max-height:45px; overflow:hidden;">"${item.texto}"</span>
+                        <span style="font-size:0.6rem; color:#3a5a40; font-family:monospace;">📥 Subida: ${item.timestampSubida}</span><br>
+                        <span style="font-size:0.6rem; color:#85581A; font-family:monospace;">🔑 Hash: ${item.hash}</span>
+                    </div>
+                    <div class="acciones-tarjeta">
+                        <button class="btn-tarjeta" onclick="descargarEstampillaHD('${item.id}')">💾 Descargar EstampiYA!</button>
+                        <button class="btn-tarjeta btn-tarjeta-eliminar" onclick="eliminarEstampillaNube('${item.id}')">🗑️ Borrar</button>
+                    </div>
+                `;
+                contenedor.appendChild(tarjeta);
+            });
+        }
+
+        async function eliminarEstampillaNube(id) {
+            if (confirm("¿Estás seguro de eliminar esta estampilla de la nube?")) {
+                try {
+                    await db.collection("estampillas_globales").doc(id).delete();
+                } catch(e) {
+                    alert("No se pudo eliminar.");
+                }
+            }
+        }
+
+        // --- MOTOR DE DESCARGA DE LA ESTAMPILLA INTEGRADA (Sello redondo + Display Casio + Texto) ---
+        function descargarEstampillaHD(id) {
+            const item = baseEstampillas.find(c => String(c.id) === String(id));
+            if (!item) return;
+
+            const timestampBajada = obtenerTimestampPreciso();
+            const hashBajada = generarHashUnico();
+
+            const canvas = document.getElementById('canvas-oculto');
+            const ctx = canvas.getContext('2d');
+
+            const orient = item.orientacion || 'horizontal';
+            let anchoCanvas = 900;
+            let altoCanvas = orient === 'vertical' ? 1400 : 1150;
+
+            canvas.width = anchoCanvas;
+            canvas.height = altoCanvas;
+
+            ctx.fillStyle = '#f7f3e8';
+            ctx.fillRect(0, 0, anchoCanvas, altoCanvas);
+
+            const img = new Image();
+            img.onload = function() {
+                const stampX = 50;
+                const stampY = 40;
+                const stampW = anchoCanvas - 100;
+                const stampH = altoCanvas - 80;
+
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+                ctx.shadowBlur = 16;
+                ctx.shadowOffsetX = 4;
+                ctx.shadowOffsetY = 6;
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(stampX, stampY, stampW, stampH);
+                ctx.shadowColor = 'transparent';
+
+                ctx.strokeStyle = '#dcd6c5';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(stampX + 12, stampY + 12, stampW - 24, stampH - 24);
+
+                // Perforaciones dentadas
+                ctx.fillStyle = '#f7f3e8';
+                const radioOndita = 9;
+                for (let x = stampX + 26; x < stampX + stampW - 12; x += 22) {
+                    ctx.beginPath(); ctx.arc(x, stampY, radioOndita, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                    ctx.beginPath(); ctx.arc(x, stampY + stampH, radioOndita, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                }
+                for (let y = stampY + 26; y < stampY + stampH - 12; y += 22) {
+                    ctx.beginPath(); ctx.arc(stampX, y, radioOndita, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                    ctx.beginPath(); ctx.arc(stampX + stampW, y, radioOndita, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                }
+
+                const areaImgX = stampX + 30;
+                const areaImgY = stampY + 35;
+                const areaImgW = stampW - 60;
+                const areaImgH = orient === 'vertical' ? 620 : 460;
+
+                let hRatio = areaImgW / img.width;
+                let vRatio = areaImgH / img.height;
+                let ratio = Math.min(hRatio, vRatio);
+                let shiftX = (areaImgW - img.width * ratio) / 2;
+                let shiftY = (areaImgH - img.height * ratio) / 2;
+
+                ctx.fillStyle = '#f0ede6';
+                ctx.fillRect(areaImgX, areaImgY, areaImgW, areaImgH);
+                ctx.drawImage(img, 0, 0, img.width, img.height, areaImgX + shiftX, areaImgY + shiftY, img.width * ratio, img.height * ratio);
+
+                // Display Casio Cyan Brillante
+                let panelDigitalW = areaImgW - 40;
+                let panelDigitalH = 75;
+                let panelDigitalX = areaImgX + 20;
+                let panelDigitalY = areaImgY + areaImgH - panelDigitalH - 15;
+
+                ctx.fillStyle = 'rgba(11, 22, 20, 0.88)';
+                ctx.fillRect(panelDigitalX, panelDigitalY, panelDigitalW, panelDigitalH);
+                ctx.strokeStyle = '#00e5ff';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(panelDigitalX, panelDigitalY, panelDigitalW, panelDigitalH);
+
+                ctx.fillStyle = '#00ffff';
+                ctx.textAlign = 'left';
+                let textX = panelDigitalX + 12;
+                ctx.font = '20px "VT323", monospace';
+                ctx.fillText(`REF: ${item.codigo} | ESTAMPIYA! MILISEGUNDO OFICIAL`, textX, panelDigitalY + 20);
+                ctx.font = '18px "VT323", monospace';
+                ctx.fillText(`SUBIDA: ${item.timestampSubida}`, textX, panelDigitalY + 38);
+                ctx.fillText(`BAJADA: ${timestampBajada}`, textX, panelDigitalY + 54);
+                ctx.font = '15px "VT323", monospace';
+                ctx.fillText(`HASH S:${item.hash} | B:${hashBajada}`, textX, panelDigitalY + 70);
+
+                // Sello Redondo Antiguo
+                ctx.save();
+                let selloX = areaImgX + 85;
+                let selloY = areaImgY + 85;
+                let radioSello = 55;
+                ctx.translate(selloX, selloY);
+                ctx.rotate(-0.12);
+                ctx.strokeStyle = 'rgba(175, 35, 35, 0.82)';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath(); ctx.arc(0, 0, radioSello, 0, Math.PI * 2); ctx.stroke();
+                ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.arc(0, 0, radioSello - 6, 0, Math.PI * 2); ctx.stroke();
+                ctx.fillStyle = 'rgba(175, 35, 35, 0.9)';
+                ctx.font = 'bold 11px "Courier Prime", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText("★ VENTANIYA! ★", 0, -22);
+                ctx.font = 'bold 13px "Special Elite", cursive';
+                ctx.fillText("POSTA 1001", 0, 2);
+                ctx.font = 'bold 10px "Courier Prime", monospace';
+                ctx.fillText("MAR DEL PLATA", 0, 22);
+                ctx.restore();
+
+                // Zona de escritura de texto extendido
+                let zonaEscrituraY = areaImgY + areaImgH + 15;
+                let zonaEscrituraH = stampY + stampH - zonaEscrituraY - 35;
+                let zonaEscrituraW = areaImgW;
+
+                ctx.fillStyle = '#faf8f2';
+                ctx.fillRect(areaImgX, zonaEscrituraY, zonaEscrituraW, zonaEscrituraH);
+                ctx.strokeStyle = '#eae3d2';
+                ctx.lineWidth = 1;
+                let lineaY = zonaEscrituraY + 28;
+                while(lineaY < zonaEscrituraY + zonaEscrituraH - 15) {
+                    ctx.beginPath(); ctx.moveTo(areaImgX + 15, lineaY); ctx.lineTo(areaImgX + zonaEscrituraW - 15, lineaY); ctx.stroke();
+                    lineaY += 28;
+                }
+
+                ctx.fillStyle = '#222222';
+                ctx.font = '16px "Courier Prime", monospace';
+                ctx.textAlign = 'left';
+                const palabras = item.texto.split(' ');
+                let lineaActual = '';
+                let cursorTextoY = zonaEscrituraY + 25;
+                const maxAnchoLinea = zonaEscrituraW - 40;
+
+                for (let i = 0; i < palabras.length; i++) {
+                    let pruebaLinea = lineaActual + palabras[i] + ' ';
+                    let metricas = ctx.measureText(pruebaLinea);
+                    if (metricas.width > maxAnchoLinea && i > 0) {
+                        ctx.fillText(lineaActual, areaImgX + 20, cursorTextoY);
+                        lineaActual = palabras[i] + ' ';
+                        cursorTextoY += 28;
+                    } else {
+                        lineaActual = pruebaLinea;
+                    }
+                }
+                ctx.fillText(lineaActual, areaImgX + 20, cursorTextoY);
+
+                let footerY = stampY + stampH - 15;
+                ctx.font = 'bold 11px "Special Elite", cursive';
+                ctx.fillStyle = '#3a5a40';
+                ctx.textAlign = 'center';
+                ctx.fillText("ESTAMPIYA! — MEMORIA Y TRAZABILIDAD CRIPTOGRÁFICA EN MILISEGUNDOS", anchoCanvas / 2, footerY);
+
+                const link = document.createElement('a');
+                link.download = `EstampiYA_${item.codigo}_Completa.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            };
+            img.src = item.imagen;
+        }
+    </script>
+</body>
+</html>
